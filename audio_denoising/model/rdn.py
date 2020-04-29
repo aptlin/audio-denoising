@@ -44,8 +44,8 @@ class ResidualDenseBlock(nn.Module):
 class ResidualDenseNetwork(nn.Module):
     def __init__(self, args):
         super().__init__()
-        self.kernel_size = kernel_size
-        self.num_channels = num_channels
+        self.kernel_size = args.kernel_size
+        self.num_channels = args.num_channels
         self.growth_rate = args.growth_rate
         self.num_features = args.num_features
         self.num_blocks = args.num_blocks
