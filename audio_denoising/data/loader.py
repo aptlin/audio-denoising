@@ -33,7 +33,7 @@ class SpectogramPairedDataset(Dataset):
         return len(self.files)
 
     def _load_raw(self, filename: str):
-        return torch.from_numpy(np.load(filename)).unsqueeze(2)
+        return torch.from_numpy(np.load(filename)).unsqueeze(0)
 
     def __getitem__(self, idx):
         clean_file, noisy_file = self.files[idx]
@@ -48,7 +48,7 @@ def _group_random_crop(img_group, crop_height, crop_width):
     if len(img_group) == 0:
         return ()
     else:
-        height, width, _ = img_group[0].shape
+        _, height, width = img_group[0].shape
         random_height = (
             0 if height == crop_height else np.random.choice(height - crop_height)
         )
@@ -57,17 +57,17 @@ def _group_random_crop(img_group, crop_height, crop_width):
         )
         return tuple(
             image[
+                :,
                 random_height : random_height + crop_height,
                 random_width : random_width + crop_width,
-                :,
             ]
             for image in img_group
         )
 
 
 def _collate_with_cropping(batch):
-    crop_height = min([item[0].shape[0] for item in batch])
-    crop_width = min([item[0].shape[1] for item in batch])
+    crop_height = min([item[0].shape[1] for item in batch])
+    crop_width = min([item[0].shape[2] for item in batch])
     cropped_img_groups = [
         _group_random_crop(img_group, crop_height, crop_width) for img_group in batch
     ]
