@@ -1,13 +1,14 @@
 import functools
-import numpy as np
 from dataclasses import dataclass
-import torch
 from glob import glob
+
+import numpy as np
+import torch
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from ipython_secrets import get_secret
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
+from torchvision.transforms import RandomCrop
 
 
 @dataclass(frozen=True)
@@ -40,15 +41,52 @@ class SpectogramPairedDataset(Dataset):
         clean_mel = self._load_raw(clean_file)
         noisy_mel = self._load_raw(noisy_file)
 
-        noise = noisy_mel - clean_mel
-
-        return clean_mel, noise
+        return clean_mel, noisy_mel
 
 
-def load(dirname, batch_size=32, extension="npy", clean="clean", noisy="noisy"):
+def _group_random_crop(img_group, crop_height, crop_width):
+    if len(img_group) == 0:
+        return ()
+    else:
+        height, width, _ = img_group[0].shape
+        random_height = (
+            0 if height == crop_height else np.random.choice(height - crop_height)
+        )
+        random_width = (
+            0 if width == crop_width else np.random.choice(width - crop_width)
+        )
+        return tuple(
+            image[
+                random_height : random_height + crop_height,
+                random_width : random_width + crop_width,
+                :,
+            ]
+            for image in img_group
+        )
+
+
+def _collate_with_cropping(batch):
+    crop_height = min([item[0].shape[0] for item in batch])
+    crop_width = min([item[0].shape[1] for item in batch])
+    cropped_img_groups = [
+        _group_random_crop(img_group, crop_height, crop_width) for img_group in batch
+    ]
+    return tuple(map(torch.stack, zip(*cropped_img_groups)))
+
+
+def load(
+    dirname,
+    batch_size=32,
+    extension="npy",
+    clean="clean",
+    noisy="noisy",
+    collate_fn=_collate_with_cropping,
+):
     dataset = SpectogramPairedDataset(
         dirname, extension=extension, clean=clean, noisy=noisy
     )
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    loader = DataLoader(
+        dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn
+    )
 
     return loader
