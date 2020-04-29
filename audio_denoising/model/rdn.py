@@ -42,32 +42,26 @@ class ResidualDenseBlock(nn.Module):
 
 
 class ResidualDenseNetwork(nn.Module):
-    def __init__(
-        self,
-        num_channels,
-        num_features,
-        growth_rate,
-        num_blocks,
-        num_layers,
-        kernel_size=3,
-    ):
+    def __init__(self, args):
         super().__init__()
-        self.growth_rate = growth_rate
-        self.num_features = num_features
-        self.num_blocks = num_blocks
-        self.num_layers = num_layers
+        self.kernel_size = kernel_size
+        self.num_channels = num_channels
+        self.growth_rate = args.growth_rate
+        self.num_features = args.num_features
+        self.num_blocks = args.num_blocks
+        self.num_layers = args.num_layers
 
         self.outer_shallow_features = nn.Conv2d(
-            num_channels,
-            num_features,
-            kernel_size=kernel_size,
-            padding=(kernel_size - 1) // 2,
+            self.num_channels,
+            self.num_features,
+            kernel_size=self.kernel_size,
+            padding=(self.kernel_size - 1) // 2,
         )
         self.inner_shallow_features = nn.Conv2d(
-            num_features,
-            num_features,
-            kernel_size=kernel_size,
-            padding=(kernel_size - 1) // 2,
+            self.num_features,
+            self.num_features,
+            kernel_size=self.kernel_size,
+            padding=(self.kernel_size - 1) // 2,
         )
 
         self.residual_dense_blocks = nn.ModuleList(
@@ -86,9 +80,9 @@ class ResidualDenseNetwork(nn.Module):
         )
         self.output = nn.Conv2d(
             self.num_features,
-            num_channels,
-            kernel_size=kernel_size,
-            padding=(kernel_size - 1) // 2,
+            self.num_channels,
+            kernel_size=self.kernel_size,
+            padding=(self.kernel_size - 1) // 2,
         )
 
     def forward(self, x):
