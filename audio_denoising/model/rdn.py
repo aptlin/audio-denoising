@@ -64,10 +64,12 @@ class ResidualDenseNetwork(nn.Module):
             padding=(self.kernel_size - 1) // 2,
         )
 
-        self.residual_dense_blocks = [
-            ResidualDenseBlock(self.num_features, self.growth_rate, self.num_layers)
-            for _ in range(self.num_blocks)
-        ]
+        self.residual_dense_blocks = nn.ModuleList(
+            [
+                ResidualDenseBlock(self.num_features, self.growth_rate, self.num_layers)
+                for _ in range(self.num_blocks)
+            ]
+        )
 
         self.global_feature_fusion = nn.Sequential(
             nn.Conv2d(
