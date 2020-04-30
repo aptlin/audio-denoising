@@ -34,7 +34,7 @@ class ResidualDenseBlock(nn.Module):
         )
 
         self.local_feature_fusion = nn.Conv2d(
-            in_channels + growth_rate * num_layers, growth_rate, kernel_size=1
+            in_channels + growth_rate * num_layers, in_channels, kernel_size=1
         )
 
     def forward(self, x):
@@ -64,17 +64,14 @@ class ResidualDenseNetwork(nn.Module):
             padding=(self.kernel_size - 1) // 2,
         )
 
-        self.residual_dense_blocks = nn.ModuleList(
-            [ResidualDenseBlock(self.num_features, self.growth_rate, self.num_layers)]
-        )
-        for _ in range(self.num_blocks - 1):
-            self.residual_dense_blocks.append(
-                ResidualDenseBlock(self.growth_rate, self.growth_rate, self.num_layers)
-            )
+        self.residual_dense_blocks = [
+            ResidualDenseBlock(self.num_features, self.growth_rate, self.num_layers)
+            for _ in range(self.num_blocks)
+        ]
 
         self.global_feature_fusion = nn.Sequential(
             nn.Conv2d(
-                self.growth_rate * self.num_blocks, self.num_features, kernel_size=1,
+                self.num_features * self.num_blocks, self.num_features, kernel_size=1,
             ),
             nn.Conv2d(self.num_features, self.num_features, kernel_size=3, padding=1,),
         )
