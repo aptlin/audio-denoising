@@ -13,6 +13,8 @@ from tqdm import tqdm
 from audio_denoising.data.loader import SpectogramDataset
 from audio_denoising.model.rdn import ResidualDenseNetwork as Model
 
+from pytorch_ssim import ssim
+
 SOURCE_DIR = os.environ["SOURCE_DIR"] if "SOURCE_DIR" in os.environ else "/dataset"
 TARGET_DIR = os.environ["TARGET_DIR"] if "TARGET_DIR" in os.environ else "/results"
 
@@ -38,8 +40,9 @@ def process(args):
 
         img = dataset[file_idx].unsqueeze(0)
         img = img.to(device, dtype=torch.float)
-        noise = model(img)
-        print(torch.nn.functional.mse_loss(torch.zeros_like(noise), noise))
+        noise = model(img).to("cpu")
+        img = img.to("cpu")
+        print(ssim(img - noise, img))
         if torch.allclose(torch.zeros_like(noise), noise, atol=args.threshold):
             results.append("clean")
             denoised_filenames.append("")
