@@ -12,6 +12,30 @@ from torchvision.transforms import RandomCrop
 
 
 @dataclass(frozen=True)
+class SpectogramDataset(Dataset):
+    dirname: str
+    extension: str = "npy"
+
+    @property
+    @functools.lru_cache(1)
+    def files(self):
+        return glob(f"{self.dirname}/**/*.{self.extension}", recursive=True)
+
+    def __len__(self):
+        return len(self.files)
+
+    def _load_raw(self, filename: str):
+        return torch.from_numpy(np.load(filename)).unsqueeze(0)
+
+    def __getitem__(self, idx):
+        mel_file = self.files[idx]
+
+        mel = self._load_raw(mel_file)
+
+        return mel
+
+
+@dataclass(frozen=True)
 class SpectogramPairedDataset(Dataset):
     dirname: str
     extension: str = "npy"
