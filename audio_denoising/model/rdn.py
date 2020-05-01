@@ -16,7 +16,6 @@ class DenseLayer(nn.Module):
             out_channels,
             kernel_size=kernel_size,
             padding=(kernel_size - 1) // 2,
-            bias=False,
         )
         self.relu = nn.ReLU(inplace=True)
 
@@ -35,10 +34,7 @@ class ResidualDenseBlock(nn.Module):
         )
 
         self.local_feature_fusion = nn.Conv2d(
-            in_channels + growth_rate * num_layers,
-            in_channels,
-            kernel_size=1,
-            bias=False,
+            in_channels + growth_rate * num_layers, in_channels, kernel_size=1,
         )
 
     def forward(self, x):
@@ -87,6 +83,12 @@ class ResidualDenseNetwork(nn.Module):
             kernel_size=self.kernel_size,
             padding=(self.kernel_size - 1) // 2,
         )
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out")
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
 
     def forward(self, x):
         outer_shallow_features = self.outer_shallow_features(x)
